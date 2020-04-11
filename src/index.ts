@@ -326,8 +326,6 @@ prog
     if (!opts.noClean) {
       await cleanDistFolder();
     }
-    opts.name = opts.name || appPackageJson.name;
-    opts.input = await getInputs(opts.entry, appPackageJson.source);
     if (opts.format.includes('cjs')) {
       await Promise.all(
         opts.output.file.map((file: string) =>
