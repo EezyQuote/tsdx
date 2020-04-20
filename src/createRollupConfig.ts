@@ -174,8 +174,10 @@ export async function createRollupConfig(
           compilerOptions: {
             // TS -> esnext, then leave the rest to babel-preset-env
             target: 'esnext',
-            // only output declarations once
-            declaration: outputNum !== 0 ? false : undefined,
+            // don't output declarations more than once
+            ...(outputNum > 0
+              ? { declaration: false, declarationMap: false }
+              : {}),
           },
         },
         check: !opts.transpileOnly,

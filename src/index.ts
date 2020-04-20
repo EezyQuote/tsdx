@@ -452,6 +452,9 @@ prog
         )
         .catch((e: any) => {
           throw e;
+        })
+        .then(async () => {
+          await deprecated.moveTypes();
         });
       logger(promise, 'Building modules');
       await promise;
