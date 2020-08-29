@@ -197,9 +197,6 @@ export async function createRollupConfig(
           'process.env.NODE_ENV': JSON.stringify(opts.env),
         }),
       sourceMaps(),
-      // sizeSnapshot({
-      //   printInfo: false,
-      // }),
       shouldMinify &&
         terser({
           sourcemap: true,
