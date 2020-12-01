@@ -1,6 +1,5 @@
-import { RollupOptions, OutputOptions } from 'rollup';
+import { RollupOptions } from 'rollup';
 import * as fs from 'fs-extra';
-import { concatAllArray } from 'jpjs';
 
 import { paths } from './constants';
 import { TsdxOptions, NormalizedOpts } from './types';
@@ -20,18 +19,14 @@ if (fs.existsSync(paths.appConfig)) {
 
 export async function createBuildConfigs(
   opts: NormalizedOpts
-): Promise<Array<RollupOptions & { output: OutputOptions }>> {
-  const allInputs = concatAllArray(
-    opts.input.map((input: string) =>
-      createAllFormats(opts, input).map(
-        (options: TsdxOptions, index: number) => ({
-          ...options,
-          // We want to know if this is the first run for each entryfile
-          // for certain plugins (e.g. css)
-          writeMeta: index === 0,
-        })
-      )
-    )
+): Promise<RollupOptions[]> {
+  const allInputs = createAllFormats(opts).map(
+    (options: TsdxOptions, index: number) => ({
+      ...options,
+      // We want to know if this is the first run for each entryfile
+      // for certain plugins (e.g. css)
+      writeMeta: index === 0,
+    })
   );
 
   return await Promise.all(
@@ -44,46 +39,52 @@ export async function createBuildConfigs(
 }
 
 function createAllFormats(
-  opts: NormalizedOpts,
-  input: string
+  opts: NormalizedOpts
 ): [TsdxOptions, ...TsdxOptions[]] {
+  const sharedOpts: Omit<TsdxOptions, 'format' | 'env'> = {
+    ...opts,
+    // for multi-entry, we use an input object to specify where to put each
+    // file instead of output.file
+    input: opts.input.reduce((dict: TsdxOptions['input'], input, index) => {
+      dict[`${opts.output.file[index]}`] = input;
+      return dict;
+    }, {}),
+    // multiple UMD names aren't currently supported for multi-entry
+    // (can't code-split UMD anyway)
+    name: opts.name[0],
+  };
+
   return [
     opts.format.includes('cjs') && {
-      ...opts,
+      ...sharedOpts,
       format: 'cjs',
       env: 'development',
-      input,
     },
     opts.format.includes('cjs') && {
-      ...opts,
+      ...sharedOpts,
       format: 'cjs',
       env: 'production',
-      input,
     },
-    opts.format.includes('esm') && { ...opts, format: 'esm', input },
+    opts.format.includes('esm') && { ...sharedOpts, format: 'esm' },
     opts.format.includes('umd') && {
-      ...opts,
+      ...sharedOpts,
       format: 'umd',
       env: 'development',
-      input,
     },
     opts.format.includes('umd') && {
-      ...opts,
+      ...sharedOpts,
       format: 'umd',
       env: 'production',
-      input,
     },
     opts.format.includes('system') && {
-      ...opts,
+      ...sharedOpts,
       format: 'system',
       env: 'development',
-      input,
     },
     opts.format.includes('system') && {
-      ...opts,
+      ...sharedOpts,
       format: 'system',
       env: 'production',
-      input,
     },
   ].filter(Boolean) as [TsdxOptions, ...TsdxOptions[]];
 }

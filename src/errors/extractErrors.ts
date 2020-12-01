@@ -12,7 +12,7 @@ import { invertObject } from './invertObject';
 import { evalToString } from './evalToString';
 import { paths } from '../constants';
 import { safeVariableName } from '../utils';
-import { pascalCase } from 'pascal-case';
+const pascalCase = require('pascal-case');
 
 const babelParserOptions: ParserOptions = {
   sourceType: 'module',
